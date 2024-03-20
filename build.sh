@@ -28,12 +28,12 @@ elif [ "$MODE" = "log" ]; then
 	USE_PROF="ON"
 	USE_LOG="ON"
 elif [ "$MODE" = "test" ]; then
-	C_MODE="Debug"
+	C_MODE="Release"
 	USE_LOG="ON"
 	USE_PROF="ON"
-	USE_DOUBLE="ON"
+	USE_DOUBLE="OFF"
 	VERBOSE=1
-	# THREAD_NUM=1
+	THREAD_NUM=1
 elif [ "$MODE" = "prof" ]; then
 	C_MODE="Release"
 	USE_LOG="OFF"
@@ -62,7 +62,7 @@ set -x
 if [ "$MODE" = "clean" ]; then
 	cd $SCRIPT_PATH/build && make clean-all
 elif [ "$MODE" = "test" ]; then
-	cd $SCRIPT_PATH/build && cmake -DCMAKE_BUILD_TYPE="Debug" -DUSE_DOUBLE=$USE_DOUBLE -DUSE_LOG=$USE_LOG -DUSE_PROF=$USE_PROF -lpthread .. 2> >(tee error.err) && make -j$THREAD_NUM VERBOSE=$VERBOSE 2> >(tee -a error.err) && make test 
+	cd $SCRIPT_PATH/build && cmake -DCMAKE_BUILD_TYPE="Debug" -DUSE_DOUBLE=$USE_DOUBLE -DUSE_LOG=$USE_LOG -DUSE_PROF=$USE_PROF .. 2> >(tee error.err) && make -j$THREAD_NUM VERBOSE=$VERBOSE 2> >(tee -a error.err) && make test 
 else
-	cd $SCRIPT_PATH/build && cmake -DCMAKE_BUILD_TYPE=$C_MODE -DUSE_DOUBLE=$USE_DOUBLE -DUSE_LOG=$USE_LOG -DUSE_PROF=$USE_PROF -lpthread .. 2> >(tee error.err) && make -j$THREAD_NUM VERBOSE=$VERBOSE 2> >(tee -a error.err)
+	cd $SCRIPT_PATH/build && cmake -DCMAKE_BUILD_TYPE=$C_MODE -DUSE_DOUBLE=$USE_DOUBLE -DUSE_LOG=$USE_LOG -DUSE_PROF=$USE_PROF .. 2> >(tee error.err) && make -j$THREAD_NUM VERBOSE=$VERBOSE 2> >(tee -a error.err)
 fi

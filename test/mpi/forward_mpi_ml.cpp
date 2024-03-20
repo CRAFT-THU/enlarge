@@ -1,6 +1,6 @@
 #include "../../include/BSim.h"
 #include <stdlib.h>
-#include<time.h>
+#include <time.h>
 
 using namespace std;
 

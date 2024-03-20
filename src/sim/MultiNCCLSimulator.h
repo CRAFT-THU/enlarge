@@ -41,9 +41,10 @@ protected:
 	int _gpu_id;
 	int _gpu_num;
 	int _gpu_grp;
-
+#ifdef NCCL
 	ncclComm_t comm_gpu;
 	cudaStream_t _stream;
+#endif
 
 	DistriNetwork *_proc_nets;
 	CrossNodeData *_proc_datas;
