@@ -23,6 +23,7 @@ enum Type {
 	Static = 2,
 	Poisson = 3,
 	// STDP,
+    NMDA,
 	TYPESIZE,
 	UNSET
 }; 
