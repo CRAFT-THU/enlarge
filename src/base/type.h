@@ -23,7 +23,11 @@ enum Type {
 	Static = 2,
 	Poisson = 3,
 	// STDP,
-    NMDA,
+
+    /* NMDA related */
+	NMDA_NRN,
+	NMDA_SYN,
+
 	TYPESIZE,
 	UNSET
 }; 

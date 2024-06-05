@@ -6,7 +6,7 @@
 
 class NMDANeuron : public Neuron {
 public:
-	NMDANeuron(real v_init, real v_rest, real v_reset, real cm, real tau_m, real tau_refrac, real tau_syn_E, real tau_syn_I, real v_thresh, real i_offset, real dt, size_t num=1);
+	NMDANeuron(real tau_rise, real tau_decay, real dt, size_t num=1);
 	NMDANeuron(const NMDANeuron &n, size_t num=0);
 	~NMDANeuron();
 
@@ -15,22 +15,13 @@ public:
 	int packup(void *data, size_t dst, size_t src) override;
 
 protected:
-	vector<int> _refract_step;
-	vector<int> _refract_time;
-
-	vector<real> _v;
-	vector<real> _Ci;
-	vector<real> _Ce;
-	vector<real> _Cm;
-	vector<real> _C_i;
-	vector<real> _C_e;
-	vector<real> _v_tmp;
-	vector<real> _V_thresh;
-	vector<real> _V_reset;
-
-	vector<real> _i_i;
-	vector<real> _i_e;
-	
+    /* refers to struct NMDANrnData */
+	vector<real> _s; // ? defaults to 0
+    vector<real> _x; // ? defaults to 0
+    
+    vector<real> _coeff;
+    vector<real> _tau_decay_rcpl;
+    vector<real> _tau_rise_compl;
 };
 
 #endif /* NMDANEURON_H */

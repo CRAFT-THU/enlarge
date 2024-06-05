@@ -1,5 +1,5 @@
 
-#include "NMDAData.h"
+#include "NMDANrnData.h"
 
 #include "../../../msg_utils/helper/helper_gpu.h"
 #include "../../gpu_utils/runtime.h"
@@ -160,6 +160,7 @@
 // 	//}
 // }
 
+// TODO: 传入的是 前驱神经元的firedTable （只读）
 __global__ void update_all_nmda_neuron(Connection *connection, NMDAData *data, real *buffer, uinteger_t *firedTable, uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t offset, int time)
 // __global__ void update_all_nmda_neuron(NMDAData *data, int num, int offset, int time)
 {

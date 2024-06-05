@@ -10,7 +10,7 @@
 #include "../../base/type.h"
 #include "../../utils/BlockSize.h"
 
-struct NMDAData {
+struct NMDASynData {
 	bool is_view;
 	size_t num;
 

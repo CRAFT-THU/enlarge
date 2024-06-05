@@ -2,11 +2,12 @@
 #include "../../utils/runtime.h"
 #include "../../net/Connection.h"
 
-#include "NMDAData.h"
+#include "NMDANrnData.h"
 
+// TODO: 传入的是 前驱神经元的firedTable （只读）
 void updateNMDA(Connection *connection, void *_data, real *buffer, uinteger_t *firedTable, uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t offset, int time)
 {
-	NMDAData *data = (NMDAData *)_data;
+	NMDANrnData *data = (NMDANrnData *)_data;
 	int currentIdx = time % (connection->maxDelay+1);
 	for (size_t nid=0; nid<num; nid++) {
 		size_t gnid = offset + nid; 
