@@ -48,14 +48,14 @@ int freeNMDANrnPara(void *pCPU) {
     p->num = 0;
 
     if (!p->is_view) {
-        free_c(p->s);
-        free_c(p->x);
-        free_c(p->coeff);
-        free_c(p->tau_decay_rcpl);
-        free_c(p->tau_rise_compl);
+        p->s = free_c(p->s);
+        p->x = free_c(p->x);
+        p->coeff = free_c(p->coeff);
+        p->tau_decay_rcpl = free_c(p->tau_decay_rcpl);
+        p->tau_rise_compl = free_c(p->tau_rise_compl);
     }
 
-    // free_c(p->_fire_count);
+    // p->_fire_count = free_c(p->_fire_count);
 
     return 0;
 }
@@ -112,7 +112,7 @@ void *loadNMDANrn(size_t num, const string &path) {
 }
 
 bool isEqualNMDANrn(void *p1, void *p2, size_t num, uinteger_t *shuffle1,
-                 uinteger_t *shuffle2) {
+                    uinteger_t *shuffle2) {
     NMDANrnData *t1 = (NMDANrnData *)p1;
     NMDANrnData *t2 = (NMDANrnData *)p2;
 
@@ -120,8 +120,10 @@ bool isEqualNMDANrn(void *p1, void *p2, size_t num, uinteger_t *shuffle1,
     ret = ret && isEqualArray(t1->s, t2->s, num, shuffle1, shuffle2);
     ret = ret && isEqualArray(t1->x, t2->x, num, shuffle1, shuffle2);
     ret = ret && isEqualArray(t1->coeff, t2->coeff, num, shuffle1, shuffle2);
-    ret = ret && isEqualArray(t1->tau_decay_rcpl, t2->tau_decay_rcpl, num, shuffle1, shuffle2);
-    ret = ret && isEqualArray(t1->tau_rise_compl, t2->tau_rise_compl, num, shuffle1, shuffle2);
+    ret = ret && isEqualArray(t1->tau_decay_rcpl, t2->tau_decay_rcpl, num,
+                              shuffle1, shuffle2);
+    ret = ret && isEqualArray(t1->tau_rise_compl, t2->tau_rise_compl, num,
+                              shuffle1, shuffle2);
 
     return ret;
 }

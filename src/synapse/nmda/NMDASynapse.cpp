@@ -4,12 +4,12 @@
 #include "../../third_party/json/json.h"
 
 #include "NMDASynapse.h"
-#include "NMDAData.h"
+#include "NMDASynData.h"
 
 // const Type NMDASynapse::type = NMDA;
 
 NMDASynapse::NMDASynapse(real weight, real delay, real tau_syn, real dt, size_t num)
-	: Synapse(NMDA, num)
+	: Synapse(NMDA_SYN, num)
 {
 	int delay_steps = static_cast<int>(round(delay/dt));
 	assert(fabs(tau_syn) > ZERO);
@@ -24,7 +24,7 @@ NMDASynapse::NMDASynapse(real weight, real delay, real tau_syn, real dt, size_t 
 }
 
 NMDASynapse::NMDASynapse(const real *weight, const real *delay, const real *tau_syn, real dt, size_t num)
-	: Synapse(NMDA, num)
+	: Synapse(NMDA_SYN, num)
 {
 	_weight.resize(num);
 	_delay.resize(num);
@@ -45,7 +45,7 @@ NMDASynapse::NMDASynapse(const real *weight, const real *delay, const real *tau_
 }
 
 NMDASynapse::NMDASynapse(const real *weight, const real *delay, const real tau_syn, real dt, size_t num)
-	: Synapse(NMDA, num)
+	: Synapse(NMDA_SYN, num)
 {
 	_weight.resize(num);
 	_delay.resize(num);
@@ -65,7 +65,7 @@ NMDASynapse::NMDASynapse(const real *weight, const real *delay, const real tau_s
 }
 
 NMDASynapse::NMDASynapse(const real *weight, const real *delay, real dt, size_t num)
-	: Synapse(NMDA, num)
+	: Synapse(NMDA_SYN, num)
 {
 	_weight.resize(num);
 	_delay.resize(num);
@@ -112,7 +112,7 @@ int NMDASynapse::append(const Synapse *syn, size_t num)
 
 void * NMDASynapse::packup()
 {
-	NMDAData *p = static_cast<NMDAData *>(mallocNMDA());
+	NMDASynData *p = static_cast<NMDASynData *>(mallocNMDASyn());
 
 	p->num = _num;
 	p->pWeight = _weight.data();
@@ -123,7 +123,7 @@ void * NMDASynapse::packup()
 
 int NMDASynapse::packup(void *data, size_t dst, size_t src)
 {
-	NMDAData *p = static_cast<NMDAData *>(data);
+	NMDASynData *p = static_cast<NMDASynData *>(data);
 
 	p->pWeight[dst] = _weight[src];
 

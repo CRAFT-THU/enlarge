@@ -1,5 +1,5 @@
-#ifndef STATICSYNAPSE_H
-#define STATICSYNAPSE_H
+#ifndef NMDASYNAPSE_H
+#define NMDASYNAPSE_H
 
 #include <stdio.h>
 #include <list>
@@ -35,4 +35,4 @@ protected:
 	// NeuronBase *pDest;
 };
 
-#endif /* STATICSYNAPSE_H */
+#endif /* NMDASYNAPSE_H */

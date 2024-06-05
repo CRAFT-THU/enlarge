@@ -6,129 +6,139 @@
 #include "../../../msg_utils/helper/helper_c.h"
 
 
-#include "NMDAData.h"
+#include "NMDASynData.h"
 
-size_t getNMDASize()
+size_t getNMDASynSize()
 {
-	return sizeof(NMDAData);
+	return sizeof(NMDASynData);
 }
 
-void *mallocNMDA()
+void *mallocNMDASyn()
 {
-	NMDAData *p = (NMDAData*)malloc(sizeof(NMDAData)*1);
-	memset(p, 0, sizeof(NMDAData)*1);
+	NMDASynData *p = (NMDASynData*)malloc(sizeof(NMDASynData)*1);
+	memset(p, 0, sizeof(NMDASynData)*1);
 	return (void*)p;
 }
 
-int allocNMDAPara(void *pCPU, size_t num)
+int allocNMDASynPara(void *pCPU, size_t num)
 {
-	NMDAData *p = (NMDAData*)pCPU;
+	NMDASynData *p = (NMDASynData*)pCPU;
 
 	p->num = num;
-	p->pWeight = malloc_c<real>(num);
+	p->g = malloc_c<real>(num);
+    p->M_ca_coeff = malloc_c<real>(num);
+    p->M_c = malloc_c<real>(num);
+    p->E_syn = malloc_c<real>(num);
+
 	p->is_view = false;
 
 	return 0;
 }
 
-void *allocNMDA(size_t num)
+void *allocNMDASyn(size_t num)
 {
 	assert(num > 0);
-	void *p = mallocNMDA();
-	allocNMDAPara(p, num);
+	void *p = mallocNMDASyn();
+	allocNMDASynPara(p, num);
 	return p;
 }
 
-int freeNMDAPara(void *pCPU)
+int freeNMDASynPara(void *pCPU)
 {
-	NMDAData *p = (NMDAData*)pCPU;
+	NMDASynData *p = (NMDASynData*)pCPU;
 
 	// free(p->pDst);
 	// p->pDst = NULL;
 
 	if (!p->is_view) {
-		free(p->pWeight);
-		p->pWeight = NULL;
+		p->g = free_c(p->g);
+        p->M_ca_coeff = free_c(p->M_ca_coeff);
+        p->M_c = free_c(p->M_c);
+        p->E_syn = free_c(p->E_syn);
 	}
 
 	return 0;
 }
 
-int freeNMDA(void *pCPU)
+int freeNMDASyn(void *pCPU)
 {
-	NMDAData *p = (NMDAData*)pCPU;
+	NMDASynData *p = (NMDASynData*)pCPU;
 
-	freeNMDAPara(p);
-	free(p);
-	p = NULL;
+	freeNMDASynPara(p);
+	p = free_c(p);
 	return 0;
 }
 
-int saveNMDA(void *pCPU, size_t num, const string &path)
+int saveNMDASyn(void *pCPU, size_t num, const string &path)
 {
-	string name = path + "/static.synapse";
+	string name = path + "/nmda.synapse";
 	FILE *f = fopen_c(name.c_str(), "w");
 
-	NMDAData *p = (NMDAData*)pCPU;
+	NMDASynData *p = (NMDASynData*)pCPU;
 	assert(num <= p->num);
 	if (num <= 0) {
 		num = p->num;
 	}
 
 	fwrite_c(&(num), 1, f);
-	// fwrite(p->pDst, sizeof(int), num, f);
-	fwrite_c(p->pWeight, num, f);
+	
+	fwrite_c(p->g, num, f);
+    fwrite_c(p->M_ca_coeff, num, f);
+    fwrite_c(p->M_c, num, f);
+    fwrite_c(p->E_syn, num, f);
 
 	fclose_c(f);
 
 	return 0;
 }
 
-void *loadNMDA(size_t num, const string &path)
+void *loadNMDASyn(size_t num, const string &path)
 {
 	string name = path + "/static.synapse";
 	FILE *f = fopen_c(name.c_str(), "r");
 
-	NMDAData *p = (NMDAData*)allocNMDA(num);
+	NMDASynData *p = (NMDASynData*)allocNMDASyn(num);
 
 
 	fread_c(&(p->num), 1, f);
 	assert(num == p->num);
 
-	// fread(p->pDst, sizeof(int), num, f);
-	fread_c(p->pWeight, num, f);
+	fread_c(p->g, num, f);
+    fread_c(p->M_ca_coeff, num, f);
+    fread_c(p->M_c, num, f);
+    fread_c(p->E_syn, num, f);
 
 	fclose_c(f);
 
 	return p;
 }
 
-bool isEqualNMDA(void *p1, void *p2, size_t num, uinteger_t *shuffle1, uinteger_t *shuffle2)
+bool isEqualNMDASyn(void *p1, void *p2, size_t num, uinteger_t *shuffle1, uinteger_t *shuffle2)
 {
-	NMDAData *t1 = (NMDAData*)p1;
-	NMDAData *t2 = (NMDAData*)p2;
+	NMDASynData *t1 = (NMDASynData*)p1;
+	NMDASynData *t2 = (NMDASynData*)p2;
 
 	bool ret = true;
-	// ret = ret && isEqualArray(t1->pDst, t2->pDst, num);
 
-	ret = ret && isEqualArray(t1->pWeight, t2->pWeight, num, shuffle1, shuffle2);
+	ret = ret && isEqualArray(t1->g, t2->g, num, shuffle1, shuffle2);
+    ret = ret && isEqualArray(t1->M_ca_coeff, t2->M_ca_coeff, num, shuffle1, shuffle2);
+    ret = ret && isEqualArray(t1->M_c, t2->M_c, num, shuffle1, shuffle2);
+    ret = ret && isEqualArray(t1->E_syn, t2->E_syn, num, shuffle1, shuffle2);
 
 	return ret;
 }
 
-int shuffleNMDA(void *p, uinteger_t *shuffle, size_t num)
-{
-	NMDAData *d = static_cast<NMDAData *>(p);
-	assert(num == d->num);
+// int shuffleNMDASyn(void *p, uinteger_t *shuffle, size_t num)
+// {
+// 	NMDASynData *d = static_cast<NMDASynData *>(p);
+// 	assert(num == d->num);
 
-	real *tmp = malloc_c<real>(d->num);
-	memcpy_c(tmp, d->pWeight, d->num);
+// 	real *tmp = malloc_c<real>(d->num);
+// 	memcpy_c(tmp, d->pWeight, d->num);
 
-	for (size_t i=0; i<num; i++) {
-		d->pWeight[i] = tmp[shuffle[i]];
-	}
+// 	for (size_t i=0; i<num; i++) {
+// 		d->pWeight[i] = tmp[shuffle[i]];
+// 	}
 
-	return num;
-}
-
-
+// 	return num;
+// }
