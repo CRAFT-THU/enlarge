@@ -4,13 +4,18 @@
 #include "../../utils/runtime.h"
 #include "../../net/Connection.h"
 
-#include "StaticData.h"
+#include "ExpData.h"
 
 
-void updateStatic(Connection *connection, void *_data, real *buffer, uinteger_t *firedTable, uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t start_id, int time)
+void updateExp(Connection *connection, void *_data, real *buffer, uinteger_t *firedTable, uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t start_id, int time)
 {
 	// num是神经元数量
-	StaticData * data = (StaticData *)_data;  									// 获取当前突触的连接权重等信息
+	ExpData * data = (ExpData *)_data;  									// 获取当前突触的连接权重等信息
+    
+    // * 整体先衰减
+    for (size_t i = 0; i < data->num; ++i) data->pS[i] *= data->pWeight[i];
+    
+    // * 接收脉冲、传递
 	int delayLength = connection->maxDelay - connection->minDelay + 1;			// 计算所有可能的delay数量
 	for (int delta_t = 0; delta_t < delayLength; delta_t++) {						
 		int time_idx = (time+delayLength-delta_t)%(connection->maxDelay+1);		// 优先处理delay大的时间节点（time_idx）
@@ -27,10 +32,12 @@ void updateStatic(Connection *connection, void *_data, real *buffer, uinteger_t 
 			for (size_t j = 0; j < synapseNum; j++) {							
 				//int sid = connection->pSynapsesIdx[j+startLoc];
 				size_t sid = j+startLoc;
-				assert(sid < num);  											// 突触连接的数量 
-				real weight = data->pWeight[connection->pSidMap[sid]];			// 获得当前连接的权重
+				assert(sid < num);  											// 突触连接的数量
+                real s = data->pS[connection->pSidMap[sid]] + 1;                 // 获取当前连接的s值
+				real inc = data->pG[connection->pSidMap[sid]] * s;			// 获得当前连接的权重
 				// std::cout << "connection->dst[sid]: " << connection->dst[sid] << std::endl;
-			    buffer[connection->dst[sid]] += weight; 						// buffer中目的神经元的输入电流增加weight
+			    buffer[connection->dst[sid]] += inc; 						// buffer中目的神经元的输入电流增加weight
+                data->pS[connection->pSidMap[sid]] = s;                        // 更新当前连接的s值
 			}
 		}
 	}

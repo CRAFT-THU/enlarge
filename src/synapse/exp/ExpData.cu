@@ -27,17 +27,17 @@ void *cudaAllocExpPara(void *pCPU, size_t num)
 	ExpData *ret = (ExpData*)malloc(sizeof(ExpData)*1);
 	memset(ret, 0, sizeof(ExpData)*1);
 
-    checkCudaErrors(cudaMalloc((void**)&(ret->s), sizeof(real)*num));
-	checkCudaErrors(cudaMemset(ret->s, 0, sizeof(real)*num));
-	checkCudaErrors(cudaMemcpy(ret->s, p->s, sizeof(real)*num, cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMalloc((void**)&(ret->pS), sizeof(real)*num));
+	checkCudaErrors(cudaMemset(ret->pS, 0, sizeof(real)*num));
+	checkCudaErrors(cudaMemcpy(ret->pS, p->pS, sizeof(real)*num, cudaMemcpyHostToDevice));
 
-	checkCudaErrors(cudaMalloc((void**)&(ret->weight), sizeof(real)*num));
-	checkCudaErrors(cudaMemset(ret->weight, 0, sizeof(real)*num));
-	checkCudaErrors(cudaMemcpy(ret->weight, p->weight, sizeof(real)*num, cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMalloc((void**)&(ret->pWeight), sizeof(real)*num));
+	checkCudaErrors(cudaMemset(ret->pWeight, 0, sizeof(real)*num));
+	checkCudaErrors(cudaMemcpy(ret->pWeight, p->pWeight, sizeof(real)*num, cudaMemcpyHostToDevice));
 
-    checkCudaErrors(cudaMalloc((void**)&(ret->g), sizeof(real)*num));
-	checkCudaErrors(cudaMemset(ret->g, 0, sizeof(real)*num));
-	checkCudaErrors(cudaMemcpy(ret->g, p->g, sizeof(real)*num, cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMalloc((void**)&(ret->pG), sizeof(real)*num));
+	checkCudaErrors(cudaMemset(ret->pG, 0, sizeof(real)*num));
+	checkCudaErrors(cudaMemcpy(ret->pG, p->pG, sizeof(real)*num, cudaMemcpyHostToDevice));
 
 	return ret;
 }
@@ -57,9 +57,9 @@ int cudaExpParaToGPU(void *pCPU, void *pGPU, size_t num)
 	ExpData *pC = (ExpData*)pCPU;
 	ExpData *pG = (ExpData*)pGPU;
 
-    checkCudaErrors(cudaMemcpy(pG->s, pC->s, sizeof(real)*num, cudaMemcpyHostToDevice));
-	checkCudaErrors(cudaMemcpy(pG->weight, pC->weight, sizeof(real)*num, cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaMemcpy(pG->g, pC->g, sizeof(real)*num, cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(pG->pS, pC->pS, sizeof(real)*num, cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(pG->pWeight, pC->pWeight, sizeof(real)*num, cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(pG->pG, pC->pG, sizeof(real)*num, cudaMemcpyHostToDevice));
 
 	return 0;
 }
@@ -69,9 +69,9 @@ int cudaExpParaFromGPU(void *pCPU, void *pGPU, size_t num)
 	ExpData *pC = (ExpData*)pCPU;
 	ExpData *pG = (ExpData*)pGPU;
 
-    checkCudaErrors(cudaMemcpy(pC->s, pG->s, sizeof(real)*num, cudaMemcpyDeviceToHost));
-	checkCudaErrors(cudaMemcpy(pC->weight, pG->weight, sizeof(real)*num, cudaMemcpyDeviceToHost));
-    checkCudaErrors(cudaMemcpy(pC->g, pG->g, sizeof(real)*num, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(pC->pS, pG->pS, sizeof(real)*num, cudaMemcpyDeviceToHost));
+	checkCudaErrors(cudaMemcpy(pC->pWeight, pG->pWeight, sizeof(real)*num, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(pC->pG, pG->pG, sizeof(real)*num, cudaMemcpyDeviceToHost));
 
 	return 0;
 }
@@ -92,12 +92,12 @@ int cudaFreeExpPara(void *pGPU)
 {
 	ExpData *p = (ExpData*)pGPU;
 
-    cudaFree(p->s);
-    p->s = NULL;
-	cudaFree(p->weight);
-	p->weight = NULL;
-    cudaFree(p->g);
-    p->g = NULL;
+    cudaFree(p->pS);
+    p->pS = NULL;
+	cudaFree(p->pWeight);
+	p->pWeight = NULL;
+    cudaFree(p->pG);
+    p->pG = NULL;
 
 	return 0;
 }

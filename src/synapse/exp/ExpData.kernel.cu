@@ -1,11 +1,19 @@
 
 #include "../../gpu_utils/runtime.h"
 
-#include "StaticData.h"
+#include "ExpData.h"
 
 
-__global__ void update_dense_static_hit(Connection *connection, StaticData *data, real *buffer, const uinteger_t *firedTable, const uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t start_id, int time)
+__global__ void update_dense_exp_hit(Connection *connection, ExpData *data, real *buffer, const uinteger_t *firedTable, const uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t start_id, int time)
 {
+    // * 整体先衰减
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    for (int idx = 0; idx < data->num; idx += blockDim.x * gridDim.x) {
+        int sid = tid + idx;  // sid: synapse id
+        if (sid < data->num) data->pS[sid] *= data->pWeight[sid];
+    }
+
+    // * 接收脉冲、传递
 	int delayLength = connection->maxDelay - connection->minDelay + 1;
 	for (int delta_t = 0; delta_t<delayLength; delta_t++) {
 		int block_idx = blockIdx.x;
@@ -47,8 +55,10 @@ __global__ void update_dense_static_hit(Connection *connection, StaticData *data
 				for (uinteger_t j=threadIdx.x; j<synapseNum; j += blockDim.x) {
 					//int sid = connection->pSynapsesIdx[j+startLoc];
 					uinteger_t sid = j+startLoc;
-					real weight = data->pWeight[connection->pSidMap[sid]];
-					atomicAdd(&(buffer[connection->dst[sid]]), weight);
+					real s = data->pS[connection->pSidMap[sid]] + 1;
+                    real inc = data->pG[connection->pSidMap[sid]] * s;
+					atomicAdd(&(buffer[connection->dst[sid]]), inc);
+                    data->pS[connection->pSidMap[sid]] = s;
 				}
 			}
 		}
@@ -56,8 +66,17 @@ __global__ void update_dense_static_hit(Connection *connection, StaticData *data
 	}
 }
 
-__global__ void update_denser_static_hit(Connection *connection, StaticData *data, real *buffer, const uinteger_t *firedTable, const uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t start_id, int time)
+__global__ void update_denser_exp_hit(Connection *connection, ExpData *data, real *buffer, const uinteger_t *firedTable, const uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t start_id, int time)
 {
+
+    // * 整体先衰减
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    for (int idx = 0; idx < data->num; idx += blockDim.x * gridDim.x) {
+        int sid = tid + idx;  // sid: synapse id
+        if (sid < data->num) data->pS[sid] *= data->pWeight[sid];
+    }
+
+    // * 接收脉冲、传递
 	int delayLength = connection->maxDelay - connection->minDelay + 1;
 	for (int delta_t = 0; delta_t<delayLength; delta_t++) {
 		int block_idx = blockIdx.x;
@@ -101,8 +120,10 @@ __global__ void update_denser_static_hit(Connection *connection, StaticData *dat
 				for (uinteger_t j = 0; j < synapseNum; ++j) {
 					//int sid = connection->pSynapsesIdx[j+startLoc];
 					uinteger_t sid = j+startLoc;
-					real weight = data->pWeight[connection->pSidMap[sid]];
-					atomicAdd(&(buffer[connection->dst[sid]]), weight);
+                    real s = data->pS[connection->pSidMap[sid]] + 1;
+					real inc = data->pG[connection->pSidMap[sid]] * s;
+					atomicAdd(&(buffer[connection->dst[sid]]), inc);
+                    data->pS[connection->pSidMap[sid]] = s;
 				}
 			}
 		}
@@ -110,10 +131,19 @@ __global__ void update_denser_static_hit(Connection *connection, StaticData *dat
 	}
 }
 
-__global__ void update_static_2l(Connection *connection, StaticData *data, real *buffer, const uinteger_t *firedTable, const uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t start_id, int time)
+__global__ void update_exp_2l(Connection *connection, ExpData *data, real *buffer, const uinteger_t *firedTable, const uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t start_id, int time)
 {
-	int delayLength = connection->maxDelay - connection->minDelay + 1;
 
+    // * 整体先衰减
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    for (int idx = 0; idx < data->num; idx += blockDim.x * gridDim.x) {
+        int sid = tid + idx;  // sid: synapse id
+        if (sid < data->num) data->pS[sid] *= data->pWeight[sid];
+    }
+
+    // * 接收脉冲、传递
+
+	int delayLength = connection->maxDelay - connection->minDelay + 1;
 
 	int d_para = gridDim.y;
 	int d_offset = delayLength % d_para;
@@ -179,8 +209,10 @@ __global__ void update_static_2l(Connection *connection, StaticData *data, real 
 				for (uinteger_t j=threadIdx.x; j<synapseNum; j += blockDim.x) {
 					//int sid = connection->pSynapsesIdx[j+startLoc];
 					uinteger_t sid = j+startLoc;
-					real weight = data->pWeight[connection->pSidMap[sid]];
-					atomicAdd(&(buffer[connection->dst[sid]]), weight);
+                    real s = data->pS[connection->pSidMap[sid]] + 1;
+					real inc = data->pG[connection->pSidMap[sid]] * s;
+					atomicAdd(&(buffer[connection->dst[sid]]), inc);
+                    data->pS[connection->pSidMap[sid]] = s;
 				}
 			}
 		}
@@ -188,16 +220,16 @@ __global__ void update_static_2l(Connection *connection, StaticData *data, real 
 	}
 }
 
-void cudaUpdateStatic(Connection * connection, void *data, real *buffer, uinteger_t *firedTable, uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t start_id, int time, BlockSize *pSize)
+void cudaUpdateExp(Connection * connection, void *data, real *buffer, uinteger_t *firedTable, uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t start_id, int time, BlockSize *pSize)
 {
 	// std::cout << pSize->gridSize << " " << pSize->blockSize << std::endl;
-	//update_static_hit<<<pSize->gridSize, pSize->blockSize>>>((StaticData*)data, num, start_id);
-	//reset_active_synapse<<<1, 1>>>();
-	// update_denser_static_hit<<<pSize->gridSize, pSize->blockSize>>>((Connection *)connection,  (StaticData *)data, buffer, firedTable, firedTableSizes, firedTableCap, num, start_id, time);
-	// std::cout << "NUMBER in updateStatic: " << num << std::endl;
+	// update_exp_hit<<<pSize->gridSize, pSize->blockSize>>>((ExpData*)data, num, start_id);
+	// reset_active_synapse<<<1, 1>>>();
+	// update_denser_exp_hit<<<pSize->gridSize, pSize->blockSize>>>((Connection *)connection,  (ExpData *)data, buffer, firedTable, firedTableSizes, firedTableCap, num, start_id, time);
+	// std::cout << "NUMBER in updateExp: " << num << std::endl;
 
 
-	update_dense_static_hit<<<pSize->gridSize, pSize->blockSize>>>((Connection *)connection,  (StaticData *)data, buffer, firedTable, firedTableSizes, firedTableCap, num, start_id, time);
+	update_dense_exp_hit<<<pSize->gridSize, pSize->blockSize>>>((Connection *)connection,  (ExpData *)data, buffer, firedTable, firedTableSizes, firedTableCap, num, start_id, time);
 
 	// uint3 block, grid;
 	// grid.z = 1;
@@ -206,5 +238,5 @@ void cudaUpdateStatic(Connection * connection, void *data, real *buffer, uintege
 	// block.z = 1;
 	// block.y = 1;
 	// block.x = pSize->blockSize;
-	// update_static_2l<<<grid, block>>>((Connection *)connection,  (StaticData *)data, buffer, firedTable, firedTableSizes, firedTableCap, num, start_id, time);
+	// update_exp_2l<<<grid, block>>>((Connection *)connection,  (ExpData *)data, buffer, firedTable, firedTableSizes, firedTableCap, num, start_id, time);
 }

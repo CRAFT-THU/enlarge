@@ -14,7 +14,7 @@ public:
     ExpSynapse(const real *g_max, const real *tau_rise, real dt, size_t num=1);
     ExpSynapse(const real *g_max, const real tau_rise, real dt, size_t num=1);
     ExpSynapse(const real g_max, const real *tau_rise, real dt, size_t num=1);
-    ExpSynapse(real dt, size_t num=1); // ? g_max = 0.01, tau_rise = 2.0
+    // ExpSynapse(real dt, size_t num=1); // ? g_max = 0.01, tau_rise = 2.0
 	ExpSynapse(const ExpSynapse &s, size_t num=0);
 	~ExpSynapse();
 

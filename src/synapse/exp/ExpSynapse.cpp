@@ -95,9 +95,9 @@ void *ExpSynapse::packup() {
 
     p->num = _num;
 
-    p->s = _s.data();
-    p->weight = _weight.data();
-    p->g = _g.data();
+    p->pS = _s.data();
+    p->pWeight = _weight.data();
+    p->pG = _g.data();
 
     p->is_view = true;
 
@@ -107,9 +107,9 @@ void *ExpSynapse::packup() {
 int ExpSynapse::packup(void *data, size_t dst, size_t src) {
     ExpData *p = static_cast<ExpData *>(data);
 
-    p->s[dst] = _s[src];
-    p->weight[dst] = _weight[src];
-    p->g[dst] = _g[src];
+    p->pS[dst] = _s[src];
+    p->pWeight[dst] = _weight[src];
+    p->pG[dst] = _g[src];
 
     return 0;
 }

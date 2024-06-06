@@ -14,10 +14,10 @@ struct ExpData {
 	bool is_view;
 	size_t num;
 
-	real *s;
+	real *pS;
 
-	real *weight; // (1 - dt / tau)
-    real *g;
+	real *pWeight; // (1 - dt / tau)
+    real *pG;
 };
 
 

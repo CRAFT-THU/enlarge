@@ -20,9 +20,9 @@ int allocExpPara(void *pCPU, size_t num) {
 
     p->num = num;
 
-    p->s = malloc_c<real>(num);
-    p->weight = malloc_c<real>(num);
-    p->g = malloc_c<real>(num);
+    p->pS = malloc_c<real>(num);
+    p->pWeight = malloc_c<real>(num);
+    p->pG = malloc_c<real>(num);
 
     p->is_view = false;
 
@@ -40,9 +40,9 @@ int freeExpPara(void *pCPU) {
     ExpData *p = (ExpData *)pCPU;
 
     if (!p->is_view) {
-        p->s = free_c(p->s);
-        p->weight = free_c(p->weight);
-        p->g = free_c(p->g);
+        p->pS = free_c(p->pS);
+        p->pWeight = free_c(p->pWeight);
+        p->pG = free_c(p->pG);
     }
 
     return 0;
@@ -67,9 +67,9 @@ int saveExp(void *pCPU, size_t num, const string &path) {
     }
 
     fwrite_c(&(num), 1, f);
-    fwrite_c(p->s, num, f);
-    fwrite_c(p->weight, num, f);
-    fwrite_c(p->g, num, f);
+    fwrite_c(p->pS, num, f);
+    fwrite_c(p->pWeight, num, f);
+    fwrite_c(p->pG, num, f);
 
     fclose_c(f);
 
@@ -85,9 +85,9 @@ void *loadExp(size_t num, const string &path) {
     fread_c(&(p->num), 1, f);
     assert(num == p->num);
 
-    fread_c(p->s, num, f);
-    fread_c(p->weight, num, f);
-    fread_c(p->g, num, f);
+    fread_c(p->pS, num, f);
+    fread_c(p->pWeight, num, f);
+    fread_c(p->pG, num, f);
 
     fclose_c(f);
 
@@ -99,9 +99,9 @@ bool isEqualExp(void *p1, void *p2, size_t num, uinteger_t *shuffle1,
     ExpData *t1 = (ExpData *)p1;
     ExpData *t2 = (ExpData *)p2;
 
-    bool ret = isEqualArray(t1->s, t2->s, num, shuffle1, shuffle2);
-    ret = ret && isEqualArray(t1->weight, t2->weight, num, shuffle1, shuffle2);
-    ret = ret && isEqualArray(t1->g, t2->g, num, shuffle1, shuffle2);
+    bool ret = isEqualArray(t1->pS, t2->pS, num, shuffle1, shuffle2);
+    ret = ret && isEqualArray(t1->pWeight, t2->pWeight, num, shuffle1, shuffle2);
+    ret = ret && isEqualArray(t1->pG, t2->pG, num, shuffle1, shuffle2);
 
     return ret;
 }
@@ -111,16 +111,16 @@ int shuffleExp(void *p, uinteger_t *shuffle, size_t num) {
     assert(num == d->num);
 
     real *tmp_s = malloc_c<real>(d->num);
-    memcpy_c(tmp_s, d->s, d->num);
+    memcpy_c(tmp_s, d->pS, d->num);
     real *tmp_w = malloc_c<real>(d->num);
-    memcpy_c(tmp_w, d->weight, d->num);
+    memcpy_c(tmp_w, d->pWeight, d->num);
     real *tmp_g = malloc_c<real>(d->num);
-    memcpy_c(tmp_g, d->g, d->num);
+    memcpy_c(tmp_g, d->pG, d->num);
 
     for (size_t i = 0; i < num; i++) {
-        d->s[i] = tmp_s[shuffle[i]];
-        d->weight[i] = tmp_w[shuffle[i]];
-        d->g[i] = tmp_g[shuffle[i]];
+        d->pS[i] = tmp_s[shuffle[i]];
+        d->pWeight[i] = tmp_w[shuffle[i]];
+        d->pG[i] = tmp_g[shuffle[i]];
     }
 
     return num;
