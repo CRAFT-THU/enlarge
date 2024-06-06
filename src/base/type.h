@@ -22,6 +22,7 @@ enum Type {
 	// TJ,
 	Static = 2,
 	Poisson = 3,
+    Exp = 4,
 	// STDP,
 
     /* NMDA related */

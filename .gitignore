@@ -32,3 +32,4 @@ bsim/so_gen/*
 bsim/*_gen/*
 tmp
 .vscode
+.venv
