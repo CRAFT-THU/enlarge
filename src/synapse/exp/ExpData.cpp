@@ -99,7 +99,8 @@ bool isEqualExp(void *p1, void *p2, size_t num, uinteger_t *shuffle1,
     ExpData *t1 = (ExpData *)p1;
     ExpData *t2 = (ExpData *)p2;
 
-    bool ret = isEqualArray(t1->pS, t2->pS, num, shuffle1, shuffle2);
+    bool ret = t1->num == t2->num;
+    ret = ret && isEqualArray(t1->pS, t2->pS, num, shuffle1, shuffle2);
     ret = ret && isEqualArray(t1->pWeight, t2->pWeight, num, shuffle1, shuffle2);
     ret = ret && isEqualArray(t1->pG, t2->pG, num, shuffle1, shuffle2);
 

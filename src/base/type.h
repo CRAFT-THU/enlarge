@@ -22,8 +22,12 @@ enum Type {
 	// TJ,
 	Static = 2,
 	Poisson = 3,
-    Exp = 4,
 	// STDP,
+
+    /* Exponential AMBA */
+    Exp = 4,
+    LIFExp = 5,
+    IAFExp = 6,
 
     /* NMDA related */
 	NMDA_NRN,

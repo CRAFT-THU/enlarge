@@ -1,11 +1,11 @@
 
-#include "NMDANrnData.h"
+#include "LIFExpData.h"
 
 #include "../../../msg_utils/helper/helper_gpu.h"
 #include "../../gpu_utils/runtime.h"
 #include "../../net/Connection.h"
 
-// __global__ void find_nmda_neuron(NMDAData *data, real * currentE, real * currentI, int num, int offset)
+// __global__ void find_lif_neuron(LIFData *data, real * currentE, real * currentI, int num, int offset)
 // {
 // 	__shared__ uinteger_t tActiveTable[MAX_BLOCK_SIZE];
 // 	__shared__ volatile uinteger_t activeCnt;
@@ -68,7 +68,7 @@
 // 	}
 // }
 
-// __global__ void update_nmda_neuron(Connection *connection, NMDAData *data, real *currentE, real *currentI, int *firedTable, int *firedTableSizes, int num, int offset, int time)
+// __global__ void update_lif_neuron(Connection *connection, LIFData *data, real *currentE, real *currentI, int *firedTable, int *firedTableSizes, int num, int offset, int time)
 // {
 // 	int currentIdx = time % (connection->maxDelay+1);
 // 	__shared__ int fire_table_t[MAX_BLOCK_SIZE];
@@ -160,9 +160,8 @@
 // 	//}
 // }
 
-// TODO: 传入的是 前驱神经元的firedTable （只读）
-__global__ void update_all_nmda_neuron(Connection *connection, NMDAData *data, real *buffer, uinteger_t *firedTable, uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t offset, int time)
-// __global__ void update_all_nmda_neuron(NMDAData *data, int num, int offset, int time)
+__global__ void update_all_lif_exp_neuron(Connection *connection, LIFExpData *data, real *buffer, uinteger_t *firedTable, uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t offset, int time)
+// __global__ void update_all_lif_neuron(LIFData *data, int num, int offset, int time)
 {
 	int currentIdx = time % (connection->maxDelay + 1);
 	__shared__ uinteger_t fire_table_t[MAX_BLOCK_SIZE];
@@ -185,14 +184,11 @@ __global__ void update_all_nmda_neuron(Connection *connection, NMDAData *data, r
 			bool actived = data->pRefracStep[nid] <= 0;
 
 			if (actived) {
-				data->pV_m[nid] = data->pC_m[nid] * data->pV_m[nid] + data->pV_tmp[nid] + data->pI_e[nid] * data->pC_e[nid] + data->pI_i[nid] * data->pC_i[nid];
+                // ! 先更新电流、电压再判断是否发放
+                data->pI[nid] += buffer[gnid] * (data->pE[nid] - data->pV[nid]);
+				data->pV[nid] = (1 - data->pC_m[nid]) * data->pV[nid] + data->pC_m[nid] * (data->pV_tmp[nid] + data->pR[nid] * data->pI[nid]);
 
-				// gXInput[gnid] += currentE[gnid] + currentI[gnid];
-
-				data->pI_e[nid] *= data->pCe[nid];
-				data->pI_i[nid] *= data->pCi[nid];
-
-				fired = data->pV_m[nid] >= data->pV_thresh[nid];
+				fired = data->pV[nid] >= data->pV_thresh[nid];
 
 				data->_fire_count[gnid] += fired;
 
@@ -203,14 +199,12 @@ __global__ void update_all_nmda_neuron(Connection *connection, NMDAData *data, r
 						fired = false;
 					}
 
-					data->pRefracStep[nid] = data->pRefracTime[nid] - 1;
-					data->pV_m[nid] = data->pV_reset[nid];
-				} else {
-					data->pI_e[nid] += buffer[gnid];
-					data->pI_i[nid] += buffer[gnid+num];
+					// data->pRefracStep[nid] = data->pRefracTime[nid] - 1; // ! 按需求严格打 time次拍 后再恢复
+                    data->pRefracStep[nid] = data->pRefracTime[nid];
+					data->pV[nid] = data->pV_reset[nid];
 				}
 			} else {
-				data->pRefracStep[nid] = data->pRefracStep[nid] - 1;
+				data->pRefracStep[nid] -= 1;
 			}
 
 			buffer[gnid] = 0;
@@ -253,7 +247,7 @@ __global__ void update_all_nmda_neuron(Connection *connection, NMDAData *data, r
 	__syncthreads();
 }
 
-// __global__ void update_dense_nmda_neuron(Connection *connection, NMDAData *data, real *buffer, int *firedTable, int *firedTableSizes, int firedTableCap, int num, int offset, int time)
+// __global__ void update_dense_lif_neuron(Connection *connection, LIFData *data, real *buffer, int *firedTable, int *firedTableSizes, int firedTableCap, int num, int offset, int time)
 // {
 // 	//__shared__ int fire_table_t[MAX_BLOCK_SIZE];
 // 	//__shared__ volatile int fire_cnt;
@@ -315,10 +309,10 @@ __global__ void update_all_nmda_neuron(Connection *connection, NMDAData *data, r
 // 	__syncthreads();
 // }
 
-void cudaUpdateNMDA(Connection *conn, void *data, real *buffer, uinteger_t *firedTable, uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t offset, int time, BlockSize *pSize)
+void cudaUpdateLIFExp(Connection *conn, void *data, real *buffer, uinteger_t *firedTable, uinteger_t *firedTableSizes, size_t firedTableCap, size_t num, size_t offset, int time, BlockSize *pSize)
 {
-	// find_nmda_neuron<<<pSize->gridSize, pSize->blockSize>>>((NMDAData*)data, currentE, currentI, num, offset);
-	// update_nmda_neuron<<<pSize->gridSize, pSize->blockSize>>>(conn, (NMDAData*)data, currentE, currentI, firedTable, firedTableSizes, num, offset, time);
-	update_all_nmda_neuron<<<pSize->gridSize, pSize->blockSize>>>(conn, (NMDAData*)data, buffer, firedTable, firedTableSizes, firedTableCap, num, offset, time);
+	// find_lif_neuron<<<pSize->gridSize, pSize->blockSize>>>((LIFData*)data, currentE, currentI, num, offset);
+	// update_lif_neuron<<<pSize->gridSize, pSize->blockSize>>>(conn, (LIFData*)data, currentE, currentI, firedTable, firedTableSizes, num, offset, time);
+	update_all_lif_exp_neuron<<<pSize->gridSize, pSize->blockSize>>>(conn, (LIFExpData*)data, buffer, firedTable, firedTableSizes, firedTableCap, num, offset, time);
 
 }
