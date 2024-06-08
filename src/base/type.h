@@ -27,11 +27,10 @@ enum Type {
     /* Exponential AMBA */
     Exp = 4,
     LIFExp = 5,
-    IAFExp = 6,
 
-    /* NMDA related */
-	NMDA_NRN,
-	NMDA_SYN,
+    /* NMDA */
+    NMDA = 6,
+    LIFNmda = 7,
 
 	TYPESIZE,
 	UNSET
