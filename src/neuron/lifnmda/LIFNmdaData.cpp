@@ -1,5 +1,5 @@
 
-#include "LIFExpData.h"
+#include "LIFNmdaData.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -8,16 +8,16 @@
 #include "../../../msg_utils/helper/helper_c.h"
 #include "../../utils/utils.h"
 
-size_t getLIFExpSize() { return sizeof(LIFExpData); }
+size_t getLIFNmdaSize() { return sizeof(LIFNmdaData); }
 
-void *mallocLIFExp() {
-    LIFExpData *p = (LIFExpData *)malloc(sizeof(LIFExpData) * 1);
-    memset(p, 0, sizeof(LIFExpData) * 1);
+void *mallocLIFNmda() {
+    LIFNmdaData *p = (LIFNmdaData *)malloc(sizeof(LIFNmdaData) * 1);
+    memset(p, 0, sizeof(LIFNmdaData) * 1);
     return (void *)p;
 }
 
-int allocLIFPara(void *pCPU, size_t num) {
-    LIFExpData *p = (LIFExpData *)pCPU;
+int allocLIFNmdaPara(void *pCPU, size_t num) {
+    LIFNmdaData *p = (LIFNmdaData *)pCPU;
 
     p->num = num;
 
@@ -32,6 +32,7 @@ int allocLIFPara(void *pCPU, size_t num) {
     p->pR = malloc_c<real>(num);
     p->pC_m = malloc_c<real>(num);
     p->pE = malloc_c<real>(num);
+    p->pM_c = malloc_c<real>(num);
 
     p->pI = malloc_c<real>(num);
 
@@ -42,15 +43,15 @@ int allocLIFPara(void *pCPU, size_t num) {
     return 0;
 }
 
-void *allocLIFExp(size_t num) {
+void *allocLIFNmda(size_t num) {
     assert(num > 0);
-    void *p = mallocLIFExp();
-    allocLIFPara(p, num);
+    void *p = mallocLIFNmda();
+    allocLIFNmdaPara(p, num);
     return p;
 }
 
-int freeLIFExpPara(void *pCPU) {
-    LIFExpData *p = (LIFExpData *)pCPU;
+int freeLIFNmdaPara(void *pCPU) {
+    LIFNmdaData *p = (LIFNmdaData *)pCPU;
 
     p->num = 0;
 
@@ -66,6 +67,7 @@ int freeLIFExpPara(void *pCPU) {
         p->pR = free_c(p->pR);
         p->pC_m = free_c(p->pC_m);
         p->pE = free_c(p->pE);
+        p->pM_c = free_c(p->pM_c);
 
         p->pI = free_c(p->pI);
     }
@@ -74,19 +76,19 @@ int freeLIFExpPara(void *pCPU) {
     return 0;
 }
 
-int freeLIFExp(void *pCPU) {
-    LIFExpData *p = (LIFExpData *)pCPU;
+int freeLIFNmda(void *pCPU) {
+    LIFNmdaData *p = (LIFNmdaData *)pCPU;
 
-    freeLIFExpPara(p);
+    freeLIFNmdaPara(p);
     p = free_c(p);
     return 0;
 }
 
-int saveLIFExp(void *pCPU, size_t num, const string &path) {
+int saveLIFNmda(void *pCPU, size_t num, const string &path) {
     string name = path + "/lifexp.neuron";
     FILE *f = fopen(name.c_str(), "w");
 
-    LIFExpData *p = (LIFExpData *)pCPU;
+    LIFNmdaData *p = (LIFNmdaData *)pCPU;
     assert(num <= p->num);
     if (num <= 0) num = p->num;
 
@@ -104,6 +106,7 @@ int saveLIFExp(void *pCPU, size_t num, const string &path) {
     fwrite(p->pR, sizeof(real), num, f);
     fwrite(p->pC_m, sizeof(real), num, f);
     fwrite(p->pE, sizeof(real), num, f);
+    fwrite(p->pM_c, sizeof(real), num, f);
 
     fwrite(p->pI, sizeof(real), num, f);
 
@@ -114,11 +117,11 @@ int saveLIFExp(void *pCPU, size_t num, const string &path) {
     return 0;
 }
 
-void *loadLIF(size_t num, const string &path) {
+void *loadLIFNmda(size_t num, const string &path) {
     string name = path + "/lif.neuron";
     FILE *f = fopen(name.c_str(), "r");
 
-    LIFExpData *p = (LIFExpData *)allocLIFExp(num);
+    LIFNmdaData *p = (LIFNmdaData *)allocLIFNmda(num);
 
     fread_c(&(p->num), 1, f);
 
@@ -136,6 +139,7 @@ void *loadLIF(size_t num, const string &path) {
     fread_c(p->pR, num, f);
     fread_c(p->pC_m, num, f);
     fread_c(p->pE, num, f);
+    fread_c(p->pM_c, num, f);
 
     fread_c(p->pI, num, f);
 
@@ -146,10 +150,10 @@ void *loadLIF(size_t num, const string &path) {
     return p;
 }
 
-bool isEqualLIFExp(void *p1, void *p2, size_t num, uinteger_t *shuffle1,
+bool isEqualLIFNmda(void *p1, void *p2, size_t num, uinteger_t *shuffle1,
                 uinteger_t *shuffle2) {
-    LIFExpData *t1 = (LIFExpData *)p1;
-    LIFExpData *t2 = (LIFExpData *)p2;
+    LIFNmdaData *t1 = (LIFNmdaData *)p1;
+    LIFNmdaData *t2 = (LIFNmdaData *)p2;
 
     bool ret = t1->num == t2->num;
     ret = ret && isEqualArray(t1->pRefracTime, t2->pRefracTime, num, shuffle1,
@@ -166,15 +170,16 @@ bool isEqualLIFExp(void *p1, void *p2, size_t num, uinteger_t *shuffle1,
     ret = ret && isEqualArray(t1->pR, t2->pR, num, shuffle1, shuffle2);
     ret = ret && isEqualArray(t1->pC_m, t2->pC_m, num, shuffle1, shuffle2);
     ret = ret && isEqualArray(t1->pE, t2->pE, num, shuffle1, shuffle2);
+    ret = ret && isEqualArray(t1->pM_c, t2->pM_c, num, shuffle1, shuffle2);
 
     ret = ret && isEqualArray(t1->pI, t2->pI, num, shuffle1, shuffle2);
 
     return ret;
 }
 
-int copyLIFExp(void *p_src, size_t s_off, void *p_dst, size_t d_off) {
-    LIFExpData *src = static_cast<LIFExpData *>(p_src);
-    LIFExpData *dst = static_cast<LIFExpData *>(p_dst);
+int copyLIFNmda(void *p_src, size_t s_off, void *p_dst, size_t d_off) {
+    LIFNmdaData *src = static_cast<LIFNmdaData *>(p_src);
+    LIFNmdaData *dst = static_cast<LIFNmdaData *>(p_dst);
 
     dst->pRefracTime[d_off] = src->pRefracTime[s_off];
     dst->pRefracStep[d_off] = src->pRefracStep[s_off];
@@ -187,23 +192,24 @@ int copyLIFExp(void *p_src, size_t s_off, void *p_dst, size_t d_off) {
     dst->pR[d_off] = src->pR[s_off];
     dst->pC_m[d_off] = src->pC_m[s_off];
     dst->pE[d_off] = src->pE[s_off];
+    dst->pM_c[d_off] = src->pM_c[s_off];
 
     dst->pI[d_off] = src->pI[s_off];
 
     return 0;
 }
 
-int logRateLIFExp(void *data, const char *name) {
+int logRateLIFNmda(void *data, const char *name) {
     char filename[512];
-    sprintf(filename, "rate_%s.%s.log", name, "LIFExp");
+    sprintf(filename, "rate_%s.%s.log", name, "LIFNmda");
     FILE *f = fopen_c(filename, "w+");
-    LIFExpData *d = static_cast<LIFExpData *>(data);
+    LIFNmdaData *d = static_cast<LIFNmdaData *>(data);
     log_array(f, d->_fire_count, d->num);
     fclose_c(f);
     return 0;
 }
 
-real *getVLIFExp(void *data) {
-    LIFExpData *p = static_cast<LIFExpData *>(data);
+real *getVLIFNmda(void *data) {
+    LIFNmdaData *p = static_cast<LIFNmdaData *>(data);
     return p->pV;
 }

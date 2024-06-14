@@ -16,7 +16,7 @@ void *mallocLIFExp() {
     return (void *)p;
 }
 
-int allocLIFPara(void *pCPU, size_t num) {
+int allocLIFExpPara(void *pCPU, size_t num) {
     LIFExpData *p = (LIFExpData *)pCPU;
 
     p->num = num;
@@ -45,7 +45,7 @@ int allocLIFPara(void *pCPU, size_t num) {
 void *allocLIFExp(size_t num) {
     assert(num > 0);
     void *p = mallocLIFExp();
-    allocLIFPara(p, num);
+    allocLIFExpPara(p, num);
     return p;
 }
 
@@ -114,7 +114,7 @@ int saveLIFExp(void *pCPU, size_t num, const string &path) {
     return 0;
 }
 
-void *loadLIF(size_t num, const string &path) {
+void *loadLIFExp(size_t num, const string &path) {
     string name = path + "/lif.neuron";
     FILE *f = fopen(name.c_str(), "r");
 

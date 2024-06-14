@@ -16,8 +16,11 @@ build/*
 !build/bin/*.sh
 !build/bin
 !build
-src/utils/TypeFunc.cpp
-src/utils/TypeFunc.cu
+
+# these two files are auto-generated
+src/base/TypeFunc.cpp
+src/base/TypeFunc.cu
+
 *.tmp
 *.swp
 *.test
