@@ -1,0 +1,1 @@
+NMDA的C++参考实现（未集成到CMake中，需手动编译），具体测试应用见 [./test/nmda](../test/nmda)
