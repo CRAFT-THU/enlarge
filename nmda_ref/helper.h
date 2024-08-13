@@ -46,10 +46,9 @@ std::vector<std::vector<float>> get_input() {
     return result;
 }
 
-void log_nrn_volt(std::vector<LIFNeuron>& neurons, size_t idx, size_t t) {
-    char filename[256];
-    sprintf(filename, "neuron_%lu.csv", idx);
-    FILE* f = fopen(filename, "a");
+void log_nrn_volt(std::vector<LIFNeuron>& neurons, std::string pop_name,
+                  size_t t) {
+    FILE* f = fopen((pop_name + ".csv").c_str(), "a");
     for (auto& nrn : neurons) {
         // fprintf(f, "%d", nrn.hasFired());
         fprintf(f, "%f", nrn.V);
@@ -60,10 +59,9 @@ void log_nrn_volt(std::vector<LIFNeuron>& neurons, size_t idx, size_t t) {
 }
 
 template <typename SYNTYPE>
-void log_syn_conduct(std::vector<SYNTYPE>& synapses, size_t idx, size_t t) {
-    char filename[256];
-    sprintf(filename, "syn_%lu.csv", idx);
-    FILE* f = fopen(filename, "a");
+void log_syn_conduct(std::vector<SYNTYPE>& synapses, std::string pop_name,
+                     size_t t) {
+    FILE* f = fopen((pop_name + ".csv").c_str(), "a");
     for (auto& syn : synapses) {
         fprintf(f, "%f", syn.s);
         if (&syn != &synapses.back()) fprintf(f, ",");
