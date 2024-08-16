@@ -29,6 +29,11 @@ void updateLIF(Connection *connection, void *_data, real *buffer, uinteger_t *fi
 				data->pRefracStep[nid] = data->pRefracTime[nid] - 1;
 				data->pV_m[nid] = data->pV_reset[nid];
 			} else {
+				if (data->use_input) {
+					int start = data->pInput_start[nid];
+					data->pI_e[nid] += data->pInput[start + time];
+					data->pI_i[nid] += data->pInput[start + time]; // FIXME: are they the same?
+				}
 				data->pI_e[nid] += buffer[gnid];
 				data->pI_i[nid] += buffer[num + gnid];
 			}

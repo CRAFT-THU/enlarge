@@ -59,6 +59,12 @@ int allocLIFPara(void *pCPU, size_t num)
 	p->pC_i = (real*)malloc(num*sizeof(real));
 	memset(p->pC_i, 0, num*sizeof(real));
 
+	p->use_input = false;
+	p->pInput_start = nullptr;
+	p->pInput = nullptr;
+	// * p->pInput_start 的 第 num + 1 存储总共的元素个数
+	// * p->pInput 的初始化在 LIFNeuron::packup() 中
+
 	p->_fire_count = malloc_c<int>(num);
 	
 	p->is_view = false;
@@ -77,8 +83,6 @@ void *allocLIF(size_t num)
 int freeLIFPara(void *pCPU)
 {
 	LIFData *p = (LIFData*)pCPU;
-
-	p->num = 0;
 
 	if (!p->is_view) {
 		free(p->pRefracTime);
@@ -112,8 +116,15 @@ int freeLIFPara(void *pCPU)
 		p->pC_m = NULL;
 		free(p->pC_i);
 		p->pC_i = NULL;
+
+		if (p->use_input) {
+			free_c(p->pInput_start);
+			free_c(p->pInput);
+		}
 	}
+	
 	free_c(p->_fire_count);
+	p->num = 0;
 
 	return 0;
 }
@@ -156,6 +167,13 @@ int saveLIF(void *pCPU, size_t num, const string &path)
 	fwrite(p->pC_e, sizeof(real), num, f);
 	fwrite(p->pC_m, sizeof(real), num, f);
 	fwrite(p->pC_i, sizeof(real), num, f);
+
+	fwrite_c(&p->use_input, 1, f);
+	if (p->use_input) {
+		fwrite_c(p->pInput_start, num, f);
+		fwrite_c(p->pInput, p->pInput_start[num], f);
+	}
+
 	fwrite_c(p->_fire_count, num, f);
 
 	fclose_c(f);
@@ -190,6 +208,13 @@ void *loadLIF(size_t num, const string &path)
 	fread_c(p->pC_e, num, f);
 	fread_c(p->pC_m, num, f);
 	fread_c(p->pC_i, num, f);
+
+	fread_c(&p->use_input, 1, f);
+	if (p->use_input) {
+		fread_c(p->pInput_start, num, f);
+		fread_c(p->pInput, p->pInput_start[num], f);
+	}
+
 	fread_c(p->_fire_count, num, f);
 
 	fclose_c(f);

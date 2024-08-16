@@ -205,8 +205,14 @@ __global__ void update_all_lif_neuron(Connection *connection, LIFData *data, rea
 					data->pRefracStep[nid] = data->pRefracTime[nid] - 1;
 					data->pV_m[nid] = data->pV_reset[nid];
 				} else {
-					data->pI_e[nid] += buffer[gnid];
-					data->pI_i[nid] += buffer[gnid+num];
+					if (data->use_input) {
+						int start = data->pInput_start[nid];
+						data->pI_e[nid] += data->pInput[start + time];
+						data->pI_i[nid] += data->pInput[start + time]; // FIXME: are they the same?
+					} else {
+						data->pI_e[nid] += buffer[gnid];
+						data->pI_i[nid] += buffer[gnid+num];
+					}
 				}
 			} else {
 				data->pRefracStep[nid] = data->pRefracStep[nid] - 1;
