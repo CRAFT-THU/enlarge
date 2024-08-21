@@ -74,17 +74,14 @@ void *cudaAllocLIFPara(void *pCPU, size_t num)
 	checkCudaErrors(cudaMemset(ret->pC_i, 0, sizeof(real)*num));
 	checkCudaErrors(cudaMemcpy(ret->pC_i, p->pC_i, sizeof(real)*num, cudaMemcpyHostToDevice));
 
-	ret->use_input = p->use_input;
-	if (p->use_input) {
-		int input_sz = p->pInput_start[num + 1];
-		checkCudaErrors(cudaMalloc((void**)&ret->pInput_start, sizeof(int)*(num + 1)));
-		checkCudaErrors(cudaMemset(ret->pInput_start, 0, sizeof(int)*(num + 1)));
-		checkCudaErrors(cudaMemcpy(ret->pInput_start, p->pInput_start, sizeof(int)*(num + 1), cudaMemcpyHostToDevice));
+	int input_sz = p->pInput_start[num];
+	checkCudaErrors(cudaMalloc((void**)&ret->pInput_start, sizeof(int)*(num+1)));
+	checkCudaErrors(cudaMemset(ret->pInput_start, 0, sizeof(int)*(num+1)));
+	checkCudaErrors(cudaMemcpy(ret->pInput_start, p->pInput_start, sizeof(int)*(num+1), cudaMemcpyHostToDevice));
 
-		checkCudaErrors(cudaMalloc((void**)&ret->pInput, sizeof(real)*input_sz));
-		checkCudaErrors(cudaMemset(ret->pInput, 0, sizeof(real)*input_sz));
-		checkCudaErrors(cudaMemcpy(ret->pInput, p->pInput, sizeof(real)*input_sz, cudaMemcpyHostToDevice));
-	}
+	checkCudaErrors(cudaMalloc((void**)&ret->pInput, sizeof(real)*input_sz));
+	checkCudaErrors(cudaMemset(ret->pInput, 0, sizeof(real)*input_sz));
+	checkCudaErrors(cudaMemcpy(ret->pInput, p->pInput, sizeof(real)*input_sz, cudaMemcpyHostToDevice));
 
 	ret->_fire_count = TOGPU(p->_fire_count, num);
 
@@ -122,12 +119,10 @@ int cudaLIFParaToGPU(void *pCPU, void *pGPU, size_t num)
 	checkCudaErrors(cudaMemcpy(pG->pC_e, pC->pC_e, sizeof(real)*num, cudaMemcpyHostToDevice));
 	checkCudaErrors(cudaMemcpy(pG->pC_m, pC->pC_m, sizeof(real)*num, cudaMemcpyHostToDevice));
 	checkCudaErrors(cudaMemcpy(pG->pC_i, pC->pC_i, sizeof(real)*num, cudaMemcpyHostToDevice));
-	pG->use_input = pC->use_input;
-	if (pC->use_input) {
-		int input_sz = pC->pInput_start[num];
-		checkCudaErrors(cudaMemcpy(pG->pInput_start, pC->pInput_start, sizeof(int)*(num+1), cudaMemcpyHostToDevice));
-		checkCudaErrors(cudaMemcpy(pG->pInput, pC->pInput, input_sz, cudaMemcpyHostToDevice));
-	}
+
+	int input_sz = pC->pInput_start[num];
+	checkCudaErrors(cudaMemcpy(pG->pInput_start, pC->pInput_start, sizeof(int)*(num+1), cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(pG->pInput, pC->pInput, input_sz, cudaMemcpyHostToDevice));
 
 	COPYTOGPU(pG->_fire_count, pC->_fire_count, num);
 
@@ -155,12 +150,10 @@ int cudaLIFParaFromGPU(void *pCPU, void *pGPU, size_t num)
 	checkCudaErrors(cudaMemcpy(pC->pC_e, pG->pC_e, sizeof(real)*num, cudaMemcpyDeviceToHost));
 	checkCudaErrors(cudaMemcpy(pC->pC_m, pG->pC_m, sizeof(real)*num, cudaMemcpyDeviceToHost));
 	checkCudaErrors(cudaMemcpy(pC->pC_i, pG->pC_i, sizeof(real)*num, cudaMemcpyDeviceToHost));
-	pC->use_input = pG->use_input;
-	if (pG->use_input) {
-		int input_sz = pC->pInput_start[num];
-		checkCudaErrors(cudaMemcpy(pC->pInput_start, pG->pInput_start, sizeof(int)*(num+1), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(pC->pInput, pG->pInput, sizeof(real)*input_sz, cudaMemcpyDeviceToHost));
-	}
+	
+	int input_sz = pC->pInput_start[num];
+	checkCudaErrors(cudaMemcpy(pC->pInput_start, pG->pInput_start, sizeof(int)*(num+1), cudaMemcpyDeviceToHost));
+	checkCudaErrors(cudaMemcpy(pC->pInput, pG->pInput, sizeof(real)*input_sz, cudaMemcpyDeviceToHost));
 
 	COPYFROMGPU(pC->_fire_count, pG->_fire_count, num);
 
@@ -215,12 +208,8 @@ int cudaFreeLIFPara(void *pGPU)
 	cudaFree(p->pC_i);
 	p->pC_i = NULL;
 
-	if (p->use_input) {
-		cudaFree(p->pInput_start);
-		p->pInput_start = nullptr;
-		cudaFree(p->pInput);
-		p->pInput = nullptr;
-	}
+	p->pInput_start = gpuFree(p->pInput_start);
+	p->pInput = gpuFree(p->pInput);
 
 	gpuFree(p->_fire_count);
 

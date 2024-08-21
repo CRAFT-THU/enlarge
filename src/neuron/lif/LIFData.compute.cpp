@@ -29,13 +29,17 @@ void updateLIF(Connection *connection, void *_data, real *buffer, uinteger_t *fi
 				data->pRefracStep[nid] = data->pRefracTime[nid] - 1;
 				data->pV_m[nid] = data->pV_reset[nid];
 			} else {
-				if (data->use_input) {
-					int start = data->pInput_start[nid];
-					data->pI_e[nid] += data->pInput[start + time];
-					data->pI_i[nid] += data->pInput[start + time]; // FIXME: are they the same?
-				}
-				data->pI_e[nid] += buffer[gnid];
-				data->pI_i[nid] += buffer[num + gnid];
+				int input_start = data->pInput_start[nid];
+				int input_end = data->pInput_start[nid+1];
+				int input_idx = input_start + time;
+
+				if (input_start == input_end) { // 不使用初始输入
+					data->pI_e[nid] += buffer[gnid];
+					data->pI_i[nid] += buffer[num + gnid];
+				} else if (input_idx < input_end) {
+					data->pI_e[nid] += data->pInput[input_idx];
+					data->pI_i[nid] += data->pInput[input_idx]; // FIXME: are they the same?
+				} // else do nth
 			}
 	
 		} else {

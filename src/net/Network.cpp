@@ -108,6 +108,26 @@ size_t Network::add_type_conn(Type type, size_t size)
 
 }
 
+void Network::set_input(Population *p, int nrn_id, real* input, int sz) {
+	p->item()->set_input(p->offset() + nrn_id, input, sz);
+}
+void Network::set_input(Population *p, vector<real*> input_ls, vector<int> input_sz) {
+	int start = p->offset();
+	Neuron* nrn = p->item();
+	for (int i = 0; i < input_ls.size(); ++i)
+		nrn->set_input(start + i, input_ls[i], input_sz[i]);
+}
+void Network::unset_input(Population *p, int nrn_id) {
+	p->item()->unset_input(p->offset() + nrn_id);
+}
+void Network::unset_input(Population *p) {
+	int start = p->offset();
+	Neuron* nrn = p->item();
+	for (int i = 0; i < p->size(); ++i)
+		nrn->unset_input(start + i);
+}
+
+
 int Network::connect_(ID src, ID dst, ID syn, unsigned int delay)
 {
 	_conn_n2s[src.type()][src.id()][delay].push_back(syn);

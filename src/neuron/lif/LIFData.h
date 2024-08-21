@@ -30,10 +30,11 @@ struct LIFData {
 	real *pC_i;
 	// real *pV_e;
 
-	bool use_input; // 是否使用初始输入
 	/** 
-	 * 第t时刻的初始输入 pInput[pInput_start[nid] + t]
-	 * 如果索引 > pInput_start[nid + 1]，就不再读取输入；pInput_start[num] 记录了 pInput 的长度
+	 * 第t时刻神经元#nid的初始输入 pInput[pInput_start[nid] + t]
+	 * pInput_start[num] 记录了 pInput 的长度
+	 * 如果 pInput_start[nid] + t > pInput_start[nid+1]，就不再读取输入；
+	 * 如果 pInput_start[nid] == pInput_start[nid+1]，说明不使用初始输入，从外部获取
 	*/
 	int *pInput_start;
 	real *pInput;

@@ -105,6 +105,7 @@ FILE(GLOB UNIT_TEST_CPU "test/unit/*.cpp" "test/unit/*.c")
 FILE(GLOB UNIT_TEST_GPU "test/unit/*.cu")
 FILE(GLOB C_SCRIPTS "script/*.cpp" "script/*.c")
 FILE(GLOB TOOLS "test/tool/*.cpp" "test/tool/*.c")
+FILE(GLOB NMDA_TEST "test/nmda/*.cpp", "test/nmda/*.cu", "test/nmda/*.c")
 
 FILE(COPY ${PROJECT_SOURCE_DIR}/CLEAN_ALL.cmake DESTINATION ${CMAKE_BINARY_DIR})
 
@@ -207,6 +208,15 @@ FOREACH(c_tool ${TOOLS})
 	GET_FILENAME_COMPONENT(exec_file ${c_tool} NAME_WE)
 	ADD_EXECUTABLE(${exec_file} ${c_tool})
 	TARGET_LINK_LIBRARIES(${exec_file} ${TARGET_LIB} ${MPI_LIBRARIES} ${BLAS_LIBRARIES} ${PYTHON_LIBRARIES})
+ENDFOREACH()
+
+FOREACH(exec_path ${NMDA_TEST})
+	#MESSAGE("EXEC_PATH: ${exec_path}")
+	GET_FILENAME_COMPONENT(exec_file ${exec_path} NAME_WE)
+	#MESSAGE("EXEC_FILE: ${exec_file}")
+	CUDA_ADD_EXECUTABLE(${exec_file} ${exec_path})
+	CUDA_ADD_CUFFT_TO_TARGET(${exec_file})
+	TARGET_LINK_LIBRARIES(${exec_file} ${TARGET_LIB} ${MPI_LIBRARIES} blas ${BLAS_LIBRARIES} ${PYTHON_LIBRARIES})
 ENDFOREACH()
 
 #ADD_CUSTOM_COMMAND(TARGET multi-gpusim_test

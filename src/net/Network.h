@@ -49,6 +49,12 @@ public:
 	template<class N>
 	Population* createPopulation(size_t num, N templ);
 
+	// TODO: add set_input() here
+	void set_input(Population *p, int nrn_id, real* input, int sz);
+	void set_input(Population *p, vector<real*> input_ls, vector<int> input_sz);
+	void unset_input(Population *p, int nrn_id);
+	void unset_input(Population *p);
+
 	// add `Type type` for all connect() to support poisson connection
 	template<class S>
 	int connect(Population *pSrc, Population *pDst, S templ, SpikeType sp = Exc);

@@ -10,7 +10,7 @@
 #include "LIFData.h"
 
 
-LIFNeuron::LIFNeuron(real v_init, real v_rest, real v_reset, real cm, real tau_m, real tau_refrac, real tau_syn_E, real tau_syn_I, real v_thresh, real i_offset, real dt, size_t num, bool use_input) : Neuron(LIF, num, use_input){
+LIFNeuron::LIFNeuron(real v_init, real v_rest, real v_reset, real cm, real tau_m, real tau_refrac, real tau_syn_E, real tau_syn_I, real v_thresh, real i_offset, real dt, size_t num) : Neuron(LIF, num, false){
 
 	real rm = (fabs(cm) > ZERO)?(tau_m/cm):1.0;			// 
 	real Cm = (tau_m>0)?exp(-dt/tau_m):0.0;
@@ -44,6 +44,9 @@ LIFNeuron::LIFNeuron(real v_init, real v_rest, real v_reset, real cm, real tau_m
 	_i_e.insert(_i_e.end(), num, 0);
 	_i_i.insert(_i_i.end(), num, 0);
 
+	_input_sz.insert(_input_sz.end(), num, 0);
+	_input_ls.insert(_input_ls.end(), num, nullptr);
+
 	assert(_num == _v.size());
 }
 
@@ -70,18 +73,17 @@ LIFNeuron::~LIFNeuron()
 
 	_i_i.clear();
 	_i_e.clear();
-
-	_use_input = false;
-
-	for (auto& p : _input) p = free_c(p);
-	_input.clear();
+	
+	// for (auto& p : _input_ls) p = free_c(p); // leave it to user
+	_input_ls.clear();
 	_input_sz.clear();
+	_input_start.clear();
+	_input.clear();
 }
 
 int LIFNeuron::append(const Neuron * neuron, size_t num)
 {
 	const LIFNeuron *n = dynamic_cast<const LIFNeuron *>(neuron);
-	assert(this->_use_input == n->_use_input);
 	int ret = 0;
 	if ((num > 0) && (num != n->size())) {
 		ret = num;
@@ -101,10 +103,8 @@ int LIFNeuron::append(const Neuron * neuron, size_t num)
 		_i_e.insert(_i_e.end(), num, 0);
 		_i_i.insert(_i_i.end(), num, 0);
 
-		if (this->_use_input && n->_use_input) { // inputs无法对齐就置零
-			_input_sz.insert(_input_sz.end(), num, 0);
-			_input.insert(_input.end(), num, nullptr);
-		}
+		_input_sz.insert(_input_sz.end(), num, 0);
+		_input_ls.insert(_input_ls.end(), num, nullptr);
 	} else {
 		ret = n->size();
 		_refract_step.insert(_refract_step.end(), n->_refract_step.begin(), n->_refract_step.end());
@@ -123,10 +123,8 @@ int LIFNeuron::append(const Neuron * neuron, size_t num)
 		_i_e.insert(_i_e.end(), n->_i_e.begin(), n->_i_e.end());
 		_i_i.insert(_i_i.end(), n->_i_i.begin(), n->_i_i.end());
 
-		if (this->_use_input && n->_use_input) {
-			_input_sz.insert(_input_sz.end(), n->_input_sz.begin(), n->_input_sz.end());
-			_input.insert(_input.end(), n->_input.begin(), n->_input.end());
-		}
+		_input_sz.insert(_input_sz.end(), n->_input_sz.begin(), n->_input_sz.end());
+		_input_ls.insert(_input_ls.end(), n->_input_ls.begin(), n->_input_ls.end());
 	}
 
 	_num += ret;
@@ -158,19 +156,9 @@ void * LIFNeuron::packup()
 	p->pC_i = _C_i.data();
 
 	// * 存储神经元初始输入的起始索引
-	p->use_input = _use_input;
-	if (_use_input) {
-		vector<int> inputStart(_num + 1, 0);
-		std::partial_sum(_input_sz.begin(), _input_sz.end(), inputStart.begin() + 1);
-		p->pInput_start = inputStart.data();
-
-		// * 压缩神经元的初始输入
-		vector<real> input;
-		for (int i = 0; i < _num; ++i)
-			if (_input_sz[i] > 0)
-				input.insert(input.end(), _input[i], _input[i] + _input_sz[i]);
-		p->pInput = input.data();
-	}
+	parse_input();
+	p->pInput_start = _input_start.data();
+	p->pInput = _input.data();
 
 	p->_fire_count = malloc_c<int>(_num);
 	p->is_view = true;
@@ -196,7 +184,6 @@ int LIFNeuron::packup(void *data, size_t dst, size_t src)
 	p->pC_m[dst] = _Cm[src];
 	p->pC_i[dst] = _C_i[src];
 
-	// TODO: 是否记录pInput_start和pInput？
-
+	// TODO: 是否传递 input_start 和 input？
 	return 0;
 }
