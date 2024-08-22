@@ -44,11 +44,12 @@ int sendLIF(void *data_, int dest, int tag, MPI_Comm comm)
 	ret = MPI_Send(data->pC_i, data->num, MPI_U_REAL, dest, tag+15, comm);
 	assert(ret == MPI_SUCCESS);
 
-	int input_sz = data->pInput_start[data->num];
-	ret = MPI_Send(data->pInput_start, data->num+1, MPI_INT, dest, tag+16, comm);
-	assert(ret == MPI_SUCCESS);
-	ret = MPI_Send(data->pInput, input_sz, MPI_INT, dest, tag+17, comm);
-	assert(ret == MPI_SUCCESS);
+    ret = MPI_Send(&(data->input_sz), 1, MPI_INT, dest, tag+16, comm);
+    assert(ret == MPI_SUCCESS);
+    ret = MPI_Send(data->pInput_start, data->num, MPI_INT, dest, tag+17, comm);
+    assert(ret == MPI_SUCCESS);
+    ret = MPI_Send(data->pInput, data->input_sz, MPI_U_REAL, dest, tag+18, comm);
+    assert(ret == MPI_SUCCESS);
 
 	return ret;
 }
@@ -95,11 +96,14 @@ void * recvLIF(int src, int tag, MPI_Comm comm)
 	ret = MPI_Recv(net->pC_i, net->num, MPI_U_REAL, src, tag+15, comm, &status);
 	assert(ret==MPI_SUCCESS);
 
-	MPI_Recv(&net->pInput_start, net->num+1, MPI_INT, src, tag+16, comm, &status);
+    ret = MPI_Recv(&(net->input_sz), 1, MPI_INT, src, tag+16, comm, &status);
 	assert(ret==MPI_SUCCESS);
-	int input_sz = net->pInput_start[net->num];
-	MPI_Recv(&net->pInput, input_sz, MPI_U_REAL, src, tag+17, comm, &status);
+    ret = MPI_Recv(net->pInput_start, net->num, MPI_INT, src, tag+17, comm, &status);
 	assert(ret==MPI_SUCCESS);
+    
+    net->pInput = (real*)malloc(net->input_sz*sizeof(real));
+    ret = MPI_Recv(net->pInput, net->input_sz, MPI_U_REAL, src, tag+18, comm, &status);
+    assert(ret==MPI_SUCCESS);
 
 	return net;
 }

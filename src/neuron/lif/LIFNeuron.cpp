@@ -44,8 +44,8 @@ LIFNeuron::LIFNeuron(real v_init, real v_rest, real v_reset, real cm, real tau_m
 	_i_e.insert(_i_e.end(), num, 0);
 	_i_i.insert(_i_i.end(), num, 0);
 
-	_input_sz.insert(_input_sz.end(), num, 0);
-	_input_ls.insert(_input_ls.end(), num, nullptr);
+	_input_size.insert(_input_size.end(), num, 0);
+	_input_list.insert(_input_list.end(), num, nullptr);
 
 	assert(_num == _v.size());
 }
@@ -74,9 +74,9 @@ LIFNeuron::~LIFNeuron()
 	_i_i.clear();
 	_i_e.clear();
 	
-	// for (auto& p : _input_ls) p = free_c(p); // leave it to user
-	_input_ls.clear();
-	_input_sz.clear();
+	// for (auto& p : _input_list) p = free_c(p); // leave it to user
+	_input_list.clear();
+	_input_size.clear();
 	_input_start.clear();
 	_input.clear();
 }
@@ -103,8 +103,8 @@ int LIFNeuron::append(const Neuron * neuron, size_t num)
 		_i_e.insert(_i_e.end(), num, 0);
 		_i_i.insert(_i_i.end(), num, 0);
 
-		_input_sz.insert(_input_sz.end(), num, 0);
-		_input_ls.insert(_input_ls.end(), num, nullptr);
+		_input_size.insert(_input_size.end(), num, 0);
+		_input_list.insert(_input_list.end(), num, nullptr);
 	} else {
 		ret = n->size();
 		_refract_step.insert(_refract_step.end(), n->_refract_step.begin(), n->_refract_step.end());
@@ -123,8 +123,8 @@ int LIFNeuron::append(const Neuron * neuron, size_t num)
 		_i_e.insert(_i_e.end(), n->_i_e.begin(), n->_i_e.end());
 		_i_i.insert(_i_i.end(), n->_i_i.begin(), n->_i_i.end());
 
-		_input_sz.insert(_input_sz.end(), n->_input_sz.begin(), n->_input_sz.end());
-		_input_ls.insert(_input_ls.end(), n->_input_ls.begin(), n->_input_ls.end());
+		_input_size.insert(_input_size.end(), n->_input_size.begin(), n->_input_size.end());
+		_input_list.insert(_input_list.end(), n->_input_list.begin(), n->_input_list.end());
 	}
 
 	_num += ret;
@@ -135,6 +135,8 @@ int LIFNeuron::append(const Neuron * neuron, size_t num)
 
 void * LIFNeuron::packup()
 {
+    parse_input();
+
 	LIFData *p = static_cast<LIFData*>(mallocLIF());
 	assert(p != NULL);
 	p->num = _num;
@@ -156,8 +158,8 @@ void * LIFNeuron::packup()
 	p->pC_i = _C_i.data();
 
 	// * 存储神经元初始输入的起始索引
-	parse_input();
-	p->pInput_start = _input_start.data();
+    p->input_sz = _input_sz;
+	p->pInput_start= _input_start.data();
 	p->pInput = _input.data();
 
 	p->_fire_count = malloc_c<int>(_num);
@@ -168,6 +170,8 @@ void * LIFNeuron::packup()
 
 int LIFNeuron::packup(void *data, size_t dst, size_t src)
 {
+    parse_input();
+
 	LIFData *p = static_cast<LIFData*>(data);
 	p->pRefracTime[dst] = _refract_time[src];
 	p->pRefracStep[dst] = _refract_step[src];
@@ -184,6 +188,10 @@ int LIFNeuron::packup(void *data, size_t dst, size_t src)
 	p->pC_m[dst] = _Cm[src];
 	p->pC_i[dst] = _C_i[src];
 
-	// TODO: 是否传递 input_start 和 input？
+    p->input_sz = _input_sz;
+	p->pInput_start[dst] = _input_start[src];
+    
+    if (!p->pInput) p->pInput = _input.data();
+    // assert(p->pInput != nullptr);
 	return 0;
 }

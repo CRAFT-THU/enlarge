@@ -59,10 +59,9 @@ int allocLIFPara(void *pCPU, size_t num)
 	p->pC_i = (real*)malloc(num*sizeof(real));
 	memset(p->pC_i, 0, num*sizeof(real));
 
-	p->pInput_start = malloc_c<int>(num+1); // ! pInput_start[num]记录了pInput的长度
+    p->input_sz = 0;
+	p->pInput_start = malloc_c<int>(num);
 	p->pInput = nullptr;
-	// * p->pInput_start 的 第 num + 1 存储总共的元素个数
-	// * p->pInput 的初始化在 LIFNeuron::packup() 中
 
 	p->_fire_count = malloc_c<int>(num);
 	
@@ -122,6 +121,7 @@ int freeLIFPara(void *pCPU)
 	
 	p->_fire_count = free_c(p->_fire_count);
 	p->num = 0;
+    p->input_sz = 0;
 
 	return 0;
 }
@@ -165,8 +165,11 @@ int saveLIF(void *pCPU, size_t num, const string &path)
 	fwrite(p->pC_m, sizeof(real), num, f);
 	fwrite(p->pC_i, sizeof(real), num, f);
 
-	fwrite_c(p->pInput_start, num+1, f);
-	fwrite_c(p->pInput, p->pInput_start[num], f);
+    fwrite_c(&(p->input_sz), 1, f);
+	fwrite_c(p->pInput_start, num, f);
+
+    assert(p->pInput != nullptr);
+	fwrite_c(p->pInput, p->input_sz, f);
 
 	fwrite_c(p->_fire_count, num, f);
 
@@ -203,8 +206,11 @@ void *loadLIF(size_t num, const string &path)
 	fread_c(p->pC_m, num, f);
 	fread_c(p->pC_i, num, f);
 
-	fread_c(p->pInput_start, num+1, f);
-	fread_c(p->pInput, p->pInput_start[num], f); // ! 可能会读错误
+    fread_c(&(p->input_sz), 1, f);
+	fread_c(p->pInput_start, num, f);
+
+    p->pInput = malloc_c<real>(p->input_sz);
+	fread_c(p->pInput, p->input_sz, f);
 
 	fread_c(p->_fire_count, num, f);
 

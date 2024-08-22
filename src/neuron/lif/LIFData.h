@@ -32,10 +32,10 @@ struct LIFData {
 
 	/** 
 	 * 第t时刻神经元#nid的初始输入 pInput[pInput_start[nid] + t]
-	 * pInput_start[num] 记录了 pInput 的长度
 	 * 如果 pInput_start[nid] + t > pInput_start[nid+1]，就不再读取输入；
 	 * 如果 pInput_start[nid] == pInput_start[nid+1]，说明不使用初始输入，从外部获取
 	*/
+    int input_sz;
 	int *pInput_start;
 	real *pInput;
 

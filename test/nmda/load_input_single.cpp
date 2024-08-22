@@ -56,6 +56,7 @@ int main(int argc, char **argv)
 
 	// STSim sim(&c, dt);	// cpu
     SGSim sim(&c, dt);	// gpu
+    // MGSim sim(&c, dt);	// FIXME: sth wrong here
 	sim.run(run_time);
 
 	return 0;

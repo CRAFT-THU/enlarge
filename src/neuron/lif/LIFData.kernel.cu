@@ -206,7 +206,7 @@ __global__ void update_all_lif_neuron(Connection *connection, LIFData *data, rea
 					data->pV_m[nid] = data->pV_reset[nid];
 				} else {
 					int input_start = data->pInput_start[nid];
-					int input_end = data->pInput_start[nid+1];
+					int input_end = nid+1 == data->num ? data->input_sz : data->pInput_start[nid+1];
 					int input_idx = input_start + time;
 
 					if (input_start == input_end) { // 不使用初始输入
