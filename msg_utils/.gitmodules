@@ -1,0 +1,3 @@
+[submodule "helper"]
+	path = helper
+	url = ../helper.git
