@@ -64,8 +64,12 @@ for i,t in enumerate(type_names):
     type_ = "neuron" if is_neuron(t) else "synapse"
     # if i >= first_synapse_idx: 
     #     type_ = 'synapse'
-    # ! 文件夹一律按 TypeName.lower() 命名，所有源代码放在下面，不要有二级目录
-    common_headers += '#include "../{}/{}/{}Data.h"\n'.format(type_, t.lower(), t)
+    
+    # TODO: 修改neuron和synapse的文件夹名
+    if "homo" in t.lower():
+        common_headers += '#include "../{}/{}/{}Data.h"\n'.format(type_ + "_homo", t[:-4].lower(), t)
+    else:
+        common_headers += '#include "../{}/{}/{}Data.h"\n'.format(type_, t.lower(), t)
 
 common_headers += '\n'
 

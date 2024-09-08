@@ -112,6 +112,7 @@ T* toGPU(T* cpu, size_t size, const char *const func, const char *const c_name, 
 	T * ret;
 
 	check(cudaMalloc((void**)&(ret), sizeof(T) * size), func, file, line);
+	check(cudaMemset(ret, 0, sizeof(T)*(size)), func, file, line);
 	check(cudaMemcpy(ret, cpu, sizeof(T)*size, cudaMemcpyHostToDevice), func, file, line);
 
 	return ret;
@@ -129,6 +130,7 @@ T* toGPU(T* cpu, size_t size)
 
 	T * ret;
 	checkCudaErrors(cudaMalloc((void**)&(ret), sizeof(T) * size));
+	checkCudaErrors(cudaMemset(ret, 0, sizeof(T)*(size)));
 	checkCudaErrors(cudaMemcpy(ret, cpu, sizeof(T)*size, cudaMemcpyHostToDevice));
 
 	return ret;

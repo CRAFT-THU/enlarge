@@ -32,6 +32,9 @@ enum Type {
     NMDA = 6,
     LIFNmda = 7,
 
+	/* Homo */
+	LIFHomo,
+
 	TYPESIZE,
 	UNSET
 }; 
